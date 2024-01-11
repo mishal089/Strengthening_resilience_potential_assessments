@@ -1,0 +1,573 @@
+,.
+1,
+2,% of community made up of resistant and tolerant corals
+3,absence of bioeroders
+4,absence of coral disease
+5,abundance and types of coral disease
+6,abundance and types of predation
+7,abundance of bioeroders
+8,abundance of bleaching-resistant corals
+9,abundance of coral disease
+10,abundance of coral recruits
+11,abundance of corrallivores fish
+12,abundance of herbivores
+13,abundance of mature coral colonies
+14,abundance of mature corals
+15,abundance of other herbivores
+16,abundance of resistant/tolerant species
+17,acclimatization of corals to higher temperatures - ponding of water
+18,acropora size range
+19,aggregate patch reef
+20,aggregate reef
+21,agriculture and golf course runoff
+22,algae cover
+23,algae halimeda cover
+24,algal cover
+25,amount of partial mortality
+26,amount of rubble
+27,and algae
+28,and temperature variability
+29,aof= algae and other fauna cover
+30,aspect
+31,average thermal tolerance of  corals
+32,biodiversity
+33,bioeroders
+34,bioeroders (internal
+35,bioeroders and corallivores)
+36,biomass  values  of herbivorous   fish
+37,bleached coral
+38,bleached corals
+39,bleaching
+40,bleaching resistance
+41,bleaching resistance of coral community
+42,bleaching resistant corals
+43,bleaching susceptibility
+44,branching obligates/ residents
+45,branching residents
+46,broad range of coral size classes
+47,broad size range
+48,browser biomass
+49,browsers
+50,canopy corals
+51,canopy corals - degree of multistorey canopy in
+52,carnivore biomass
+53,carnivorous   fish biomass
+54,cca
+55,cca cover
+56,"cfg= coral functional group, the number of coral life form"
+57,chemical pollution
+58,chlorophyll
+59,"chq= coral habitat quality,  squareroot of acroporiid coral cover times massive and sub-massive corals"
+60,climate change refugia
+61,cloud cover
+62,coastal development
+63,coastal suspended sediments
+64,community reserves
+65,competitors
+66,connectivity
+67,"connectivity between sites
+anthropogenic influences - overfishing"
+68,connectivity/presence of adjacent coral reefs
+69,coral-algae turf interactions
+70,coral-macro algae interactions
+71,coral abundance
+72,coral associates (branching residents
+73,coral bleaching
+74,coral colony size class distribution
+75,coral colour
+76,coral colour (3 indicators)
+77,"coral colour (3 indicators,levels)"
+78,coral community change
+79,coral community susceptibility to bleaching
+80,coral condition
+81,coral condition (bleaching
+82,coral cover
+83,coral cover (%)
+84,coral cover change
+85,coral disease
+86,coral disease incidence
+87,coral disease prevalence
+88,"coral disease, coral cover"
+89,coral diversity
+90,coral diversity index
+91,coral exposure
+92,coral exposure at low tide
+93,coral fragmentation
+94,coral framework development
+95,coral genera richness
+96,coral generic diversity
+97,coral growth
+98,coral growth (old-recovery)
+99,coral growth and median coral colony sizes
+100,coral growth form diversity
+101,coral growth margins
+102,coral health
+103,coral mortality
+104,coral mortality old
+105,coral population (recruitment
+106,coral recruit density
+107,coral recruit survivorship in response to both bleaching and sedimentation (juvenile coral mortality rate)
+108,coral recruitement
+109,coral recruitment
+110,coral recruitment density
+111,coral recruitment rate
+112,coral size class distribution
+113,coral size class distributions
+114,"coral size distribution (dominant size class, largest corals,survivorship, growth)"
+115,coral size range
+116,coral species-richness
+117,coral species abundance
+118,coral species diversity
+119,coral species richness
+120,coral submersion
+121,coral thermal sensitivity
+122,coral tolerance (old mortality)
+123,corallimorph cover
+124,corallivore abundance
+125,corallivores
+126,corallivores (abundance of coral predators)
+127,corallivores (negative)
+128,corals emergent at low tide
+129,corals: lesion repair
+130,cover of live coral and crustose coralline algae
+131,covers of dead corals
+132,crustose coralline algae cover
+133,crustose coralline algae(cca)
+134,"csn= coral small-size number, recruit count"
+135,cultural site
+136,current
+137,currents
+138,cyanobacteria cover
+139,dead coral cover
+140,dead coral with algae
+141,dead standing coral cover
+142,deep water
+143,deep water (30-50m)
+144,degree of current or surge induced mixing
+145,degree of shading or screening of corals by turbid water
+146,density of juvenile corals
+147,denuding
+148,depth
+149,depth of color (or lack thereof) of coral colonies
+150,depth of color of coral colonies
+151,depth of reef base
+152,destructive fishing
+153,detritivore abundance
+154,detritivore biomass
+155,development
+156,dhw
+157,diadema
+158,disease prevalence
+159,diseased coral
+160,dispersal barrier
+161,dispersal barrier (anthropogic)
+162,dispersal barrier (connectivity)
+163,dispersal barriers
+164,"distance between reefs, distance from the mainland"
+165,distance to deep water
+166,distant seeding
+167,distant seeding (100 km)
+168,distant seeding (100)
+169,distant seeding (100km)
+170,dominant size class
+171,dominant size class and size class diversity
+172,dominant size class/average colony size
+173,dominant size classes and largest corals)
+174,effluent
+175,environment (mgt)
+176,environmental quality
+177,erect coralline algae cover
+178,estimates of hard and soft corals
+179,estuaries
+180,evidence of coral recruitment
+181,evidence of past mortality
+182,evidence of recover potential and size class distributions
+183,evidence of recovery
+184,evidence of resistance
+185,excavating
+186,excavating grazers
+187,excavator abundance
+188,excavator biomass
+189,excavators
+190,exposed low tide
+191,exposure at low tide
+192,exposure to threats (past)- cots outbreaks
+193,exposure to upwelling
+194,external bioeroders
+195,external land features or weather patterns
+196,external)
+197,fish density
+198,fish diversity
+199,fish herbivore biomass
+200,fish herbivore functional group richness
+201,fish predation (bite marks)
+202,fisher density
+203,fishing ground
+204,fishing intensity index
+205,fishing pressure
+206,fleshy algae
+207,fleshy algae cover
+208,fleshy algal cover
+209,fleshy macroalgae
+210,fleshy macroalgae cover
+211,fraction of hard coral colonies without disease
+212,fragmentation
+213,framework abundance (suitable substrate)
+214,free from anthropogenic physical impacts
+215,free from contamination/pollution
+216,free from fishing pressure
+217,free from physical impacts
+218,free from physical impacts (storms)
+219,free from sedimentation
+220,free from solid waste pollution
+221,free from water pollution
+222,good juvenile coral supply
+223,grazer biomass
+224,grazer/browser abundance
+225,grazers)
+226,grazers/ browzers
+227,grazers/browsers
+228,grazers/browzers
+229,growth margin size (branching and table)
+230,"growth margin size (branching, foliose, table)"
+231,halimeda cover
+232,hard and soft coral cover
+233,hard coral
+234,hard coral adundance
+235,hard coral cover
+236,hard substrate
+237,hard substratum cover (suitable substrate)
+238,hardground
+239,herb-detritivore fish density
+240,"herbivore-detrivore
+fish density"
+241,herbivore abundance
+242,herbivore afg biomass.
+243,herbivore biomass
+244,herbivore biomass (scrapers
+245,herbivore diversity
+246,herbivore fish abundance
+247,herbivore fish biomass
+248,herbivore functional groups
+249,herbivores
+250,herbivorous fish biomass
+251,herbivorous fish catch by gear type
+252,herbivorous fish grazing rates
+253,herbivorous fish populations
+254,herbivory
+255,herbivory (unknown variable)
+256,herbviorous fish taxonomic richness
+257,high annual temperature variability
+258,historical data on mortality and recovery
+259,hot water event experience recovery
+260,human gravity
+261,human population density
+262,impervious surfaces
+263,incidence of coral disease
+264,"incidence of interaction with bio-erosion agents (urchins, burrowing worms)"
+265,incidence of partial mortality due to algae overgrowth
+266,incidence of partial mortality due to bleaching
+267,individual path reef
+268,industry and development index
+269,internal bioeroders
+270,invasive species abundance
+271,invert density
+272,invertivore abundance
+273,invertivore biomass
+274,is there evidence that a severe disturbance occurred recently and impacts were not as severe as expected?
+275,is there evidence that a severe disturbance occurred recently and the site is recovering quickly?
+276,juvenile coral density
+277,juvenile coral diversity
+278,juvenile coral survival
+279,land-based anthropogenic impacts
+280,land-based pollution or nutrients
+281,large colony abundance
+282,"large excavators, small excavators, scrapers, grazers, browsers, grazers/detritivores abundance"
+283,large resistant corals
+284,large table corals
+285,largest coral branching
+286,largest coral massive
+287,largest coral tabular
+288,largest corals
+289,largest corals (3)
+290,larval dispersal and connectivity
+291,layer)
+292,lesion repair
+293,light reduction
+294,lionfish
+295,live coral abundance
+296,live coral cover
+297,lobster
+298,local seeding
+299,local seeding (10 km)
+300,local seeding (10km)
+301,location of settlement of recruits
+302,long-term maximum temperature
+303,long-term minimum temperature
+304,long-term temperature conditions
+305,loose sediment (% cover)
+306,low tide exposure
+307,macro
+308,macro-algae
+309,macro-algae cover
+310,macro algae cover
+311,macroaglae cover
+312,macroalgae cover
+313,macroalgae volume
+314,manageable pollution
+315,management
+316,management - biodiversity
+317,management - environmental quality
+318,management - resources
+319,management environmental quality
+320,management intervention
+321,management resources
+322,maximum size of massive coral colonies
+323,maximum size of massive corals
+324,maximum size of massive stress resistant coral colonies
+325,maximum size of table
+326,maximum size of table acropora (stress susceptible)
+327,maximum size of table corals
+328,missing
+329,mixing
+330,mixing at the site
+331,mollusc and crustacean abundance
+332,morphological diversity
+333,mortality (old)
+334,mortality)
+335,mpa
+336,"mpa, iczm"
+337,n/a (modeled)
+338,new mortality
+339,nia
+340,non-denuding
+341,not applicable (modeled)
+342,number of fish species
+343,number of herbivore functional groups
+344,number of juvenile coral colonies
+345,number of recruits
+346,nutrient input
+347,nutrient loading
+348,nutrient pollution
+349,nutrients (no3− and po43−)
+350,obligate coral feeders (butterflyfish)
+351,obligate corallivores
+352,obligate feeders
+353,observed cots and abundances
+354,old dead coral
+355,old mortality
+356,old recovery
+357,omnivore abundance
+358,omnivore biomass
+359,oriented/directed current flow
+360,other anthropogenic pressure
+361,other cover
+362,other invert cover
+363,other inverts cover
+364,other non-fish predators
+365,overall herbivory
+366,past and present temperature dynamics that may protect corals by acclimatization/adaptive responses
+367,past recovery time taken
+368,pavement
+369,pavement cover
+370,pavement with sand channels
+371,percent cover of soft corals
+372,percentage of live coral cover
+373,"percentage of thermally sensitive
+corals"
+374,ph
+375,photic submersed ridges
+376,physical damage
+377,physical human impacts
+378,physical impacts
+379,physical shading
+380,piscivore abundance
+381,piscivore fish abundance
+382,piscivores
+383,planktivore abundance
+384,planktivore biomass
+385,point sources of pollution
+386,pollution
+387,pollution (chemical)
+388,pollution (solid)
+389,ponding/ pooling
+390,ponding/pooling
+391,"potential for upwelling
+coral cover"
+392,potential gain in fish biomass
+393,potential importance for supplying larvae to the wider gbr
+394,predation
+395,predator abundance
+396,predator/coralivore rates
+397,predators
+398,previous exposure to thermal stress events
+399,proportion of bleaching resistant species
+400,proportion of stress-tolerant coral species cover
+401,proximity to deep water
+402,proximity to deeper cooler water
+403,"proximity, connectivity and size of associated ecosystems"
+404,range of coral size classes
+405,range of size classes of table acropora colonies
+406,recent mortality
+407,recovery from earlier impacts (old)
+408,recovery old acropora
+409,recovery old pocillopora
+410,recreational ground
+411,recruit density
+412,recruitment
+413,recruitment rate
+414,recruitment rates
+415,reduction in light stress
+416,reef builder ratio
+417,reef fish abundance and diversity
+418,reef fragmentation
+419,"reef habitat (outer habitat, other)"
+420,reef slope
+421,regrowth
+422,regrowth and reorientation
+423,regrowth over dead portions of the coral colony
+424,reorientation
+425,reorientation in the plane of growth for toppled or overturned colonies
+426,resistant coral species
+427,resistant corals
+428,resistant species
+429,resistant/tolerant corals
+430,resources
+431,rock
+432,rock and other benthic components
+433,rubble
+434,rubble cover
+435,rugosity
+436,salinity
+437,sand
+438,sand cover
+439,sand/silt cover
+440,scattered coral/rock
+441,scraper abundance
+442,scraper biomass
+443,scrapers
+444,sea-surface temperature anomalies
+445,sea surface temperature variability
+446,sea surface temperature variation
+447,sediment
+448,sediment layer
+449,sediment texture
+450,sediment texture and sediment layer thickness
+451,sediment type and thickness
+452,sedimentation
+453,sedimentation/turbidity
+454,self-�‐seeding
+455,self-seeding
+456,self seeding
+457,shading
+458,size/age distribution
+459,slope
+460,soft coral
+461,soft coral cover
+462,soft substrate
+463,solid pollution
+464,solid substrate (% cover)
+465,source reef
+466,space competitors
+467,sponge cover
+468,spur and groove
+469,sst
+470,sst anomaly
+471,sst variability
+472,storm damage
+473,stress-resistant coral species
+474,stress-tolerant coral taxa
+475,structural complexity (relief)
+476,substrate availability
+477,substrate morphology
+478,substrate or coral overgrowth by macroalgae
+479,substrate suitability
+480,substrate surface features
+481,suitable substrate (rubble
+482,suitable substrate available
+483,survival of past bleaching
+484,taxonomic diversity of corals
+485,temperature
+486,temperature range
+487,temperature skewness
+488,temperature variability
+489,the active growth margin of branching and table acropora corals
+490,the active growth margin of branching and table corals
+491,the extent that corals at the site are exposed at low tide
+492,the extent that external land features or weather patterns reduce light and temperature stress
+493,the extent that features in the water reduce light stress
+494,the extent that mixing at the site is cooling temperatures
+495,the extent that topographic complexity at the site creates diverse light and temperature micro-environments
+496,thermal stress index
+497,thermal warming above critical bleaching threshold
+498,tidal mixing
+499,tides
+500,topographic complexity
+501,topographic complexity-macro
+502,topographic complexity-micro
+503,topographic complexity - macro
+504,topographic complexity - micro
+505,topographical complexity
+506,topography of the reef
+507,total coral density
+508,total fish biomass
+509,total lesion repair
+510,total regrowth
+511,total reorientation
+512,tourism
+513,traditional resource management
+514,transport
+515,turbdity (visibility)
+516,turbidity
+517,turbidity (vis)
+518,turbidity (visibility)
+519,turbidity/ sedimentation
+520,turf algae
+521,turf algae cover
+522,turf algae volume
+523,turf algal cover
+524,turf cover
+525,turf height
+526,turf index
+527,turf with sediment
+528,typhoon exposure
+529,typhoons
+530,unclear (possibly n/a in model approach)
+531,unconsolidated substrate
+532,unknown
+533,unknown (no details provided)
+534,unknown (not detailed)
+535,unknown (not stated)
+536,upwelling
+537,upwelling intensity
+538,urchin abundance
+539,urchin density
+540,urchins
+541,"uss= unsuitable settlement substrate, sum of sand and silt covers"
+542,uv light
+543,variability of water temperature
+544,visibility
+545,water depth - depth variability index (dvi)
+546,water mixing
+547,water movement
+548,wave energy/ exposure
+549,wave energy/exposure
+550,wave exposure
+551,weekly temperature variability
+552,wind
+553,wind speed
+554,zoanthid cover
+555,evidence of recover potential
+556,dominant size classes
+557,"estimates of hard corals
+"
+558,estimates of soft corals
+559,largest corals)
+560,median coral colony sizes
+561,anthropogenic influences - overfishing  
+562,connectivity between sites        
+563,herbivores (unknown)                  
+564,herbivorous fish abundance
+565,herbivorous fish functional group abundance
+566,potential for upwelling
+567,size class distributions

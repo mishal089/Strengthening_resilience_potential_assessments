@@ -1,0 +1,1608 @@
+---
+title: "Exploration_Rapid Evaluation of Resilience Assessments"
+author: "Mishal Gudka"
+date: "29 September 2022"
+output:
+  html_document: default
+  word_document: default
+---
+
+
+```{r setup, include=FALSE}
+
+require(here)
+library(tidyverse)
+library(corrplot)
+library(Hmisc)
+library(dplyr)
+library(vegan)
+library(ggfortify)
+library(readxl)
+library(ggplot2)
+library(tibble)
+library(magrittr)
+library(simpleboot)
+library(forcats)
+library(kableExtra)
+library(scales)
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = FALSE, fig.width=12, fig.height=8)
+knitr::opts_knit$set(root.dir = here::here('Rapid evaluation'))  #this sets the wd for the entire document
+```
+
+!## Importing data
+
+```{r import}
+
+data<-read.csv(file='review_rapid_eval_data.csv',header=T, stringsAsFactors = F)
+
+```
+
+
+Read in the detailed review data, exclude the 7 assessments in exclude and then filter the rapid data based on the unique set of Study.ID.1 from the detailed data
+
+```{r match_detailed_studies}
+
+data_detailed<-read.csv("../Detailed evaluation/review_detailed_eval_data.csv")
+
+#7 assessments did not meet inclusion criteria as resilience potential assessments
+
+#exclude assessments:
+#TS_2016_Eilat, AC_2019_Hawaii,	MW_2021_Chagos,	KH_2017_GBR,MG_2021_Palau, EHD_2017_PuertoRico, JM_2016_PNG
+
+exclude<-Cs(TS_2016_Eilat, AC_2019_Hawaii,	MW_2021_Chagos,	KH_2017_GBR,MG_2021_Palau, EHD_2017_PuertoRico, JM_2016_PNG)
+
+data_detailed<-data_detailed %>% 
+  filter(!Study.ID.1 %in% exclude)
+
+final_study_list<-data_detailed$Study.ID.1 %>% unique()
+
+
+#Check if there are any studies missing in data 
+
+final_study_list[!final_study_list %in% data$Study.ID.1]
+#BS_2018_Samoa is called BS_2018_AmericanSamoa in rapid data
+
+#change this in data
+data$Study.ID.1 <- gsub("BS_2018_AmericanSamoa", "BS_2018_Samoa", data$Study.ID.1)
+
+
+#filter the data to only include final_study_list
+
+data %<>%
+  filter(Study.ID.1 %in% final_study_list)
+
+```
+
+
+## Assessment Objectives
+
+You can also embed plots, for example:
+
+```{r objectives, echo=FALSE}
+
+data$What.were.the.study.objectives. %>% unique()
+
+#for a list of individual unique responses, split the values using ; (but first replace - with ;)
+objectives<-data$What.were.the.study.objectives. %>% as.data.frame() %>% 
+      rename('obj'='.')
+
+#there are no blank objective answers for any assessments so all blanks created below are artifacts of the methods and can be deleted
+
+# objectives$obj<-gsub("long-term monitoring","longterm monitoring",objectives$obj)
+# objectives$obj<-gsub("avail-ability","availability",objectives$obj)
+objectives$obj<-gsub("\n-",";",objectives$obj)
+objectives$obj<-gsub("Other:","",objectives$obj)
+# well-being
+# in-water 
+# objectives %<>%  
+#     mutate(obj=obj  %>% factor() %>%
+#                                  fct_recode(`Unknown/Unclear` = "Unspecified",
+#                                             `Unknown/Unclear`= "",
+#                                             `McClanahan et al. 2012`="McClanahan et al. (2012)",
+#                                             `Obura and Grimsditch 2009`="Obura  and  Grimsditch  2009",
+#                                             `Obura and Grimsditch 2009`="Obura & Grimsditch 2009",
+#                                             `Multiple`="Several presented in Table 1",
+#                                             `Unknown/Unclear` = "Unknown",
+#                                             `Unknown/Unclear` = "Unclear" ))
+
+#split by ; into individual columns
+
+# objectives2<-objectives %>%  
+  # separate(obj,sep = ";", into = column)
+
+str_split_fixed(objectives$obj, ";", 7) #col 7 is empty, so stop at 6
+
+
+objectives_split<-str_split_fixed(objectives$obj, ";", 6)  %>% as.data.frame()
+objectives_split$study<-data$Study.ID.1
+
+
+#Change from wide to single, long column
+data_long <- gather(objectives_split,study, values, V1:V6, factor_key=TRUE)
+
+#cleaning steps: 1. remove leading whitespace
+#remove - at start of some strings
+data_long$values<-sub("^\\s+", "", data_long$values) #removesleading whitespace
+data_long$values<- sub("\\s+$", "", data_long$values) #removes trailing whitespace
+data_long$values<- gsub('^\\-|\\-$', '', data_long$values) #removes leading -
+data_long$values<-sub("^\\s+", "", data_long$values) #removesleading whitespace
+
+
+#FINAL unqiue list 
+objectives_list_final<-data_long$values %>% unique() %>% as.data.frame()
+
+
+#there are some responses which have - in the middle to differentiate objectives e.g. 
+#coral bleaching and disease prevalence - Determine the primary drivers of differences in resilience potential between sites
+#the only noticable objective with a - as part of phrase is long-term monitoring
+
+
+
+#values to group
+
+#other management actions/plans or recommendations
+# to establish a spatial plan for managing the inshore marine waters of Djibouti to support the planning and development of the coastline
+# development of MPA zoning plans using socioeconomic objectives and criteria
+# provide recommendations on management of coral reefs within the Marine Protected Area
+# biodiversity data to assist in guiding conservation actions and marine priority sites identification
+# integration of resilience information into planning or decision support tools
+
+#bleaching assessment
+# rapid bleaching assessment
+# assess bleaching severity
+
+#other research
+# whether the abundance of S. planifrons depended on the avail-ability of its preferred habitat (large Orbicellacorals), general benthic community characteristics or the abundance of potential predators
+# identify locally framed indicators of well-being and, in doing so, to support planning at the four sites.
+# evaluate the effects of increasing human populations on fishes, corals, macro invertebrates, and macroalgal assemblages across four atolls
+# identify local stressors adversely impacting coral reef resilience that can be influenced by MPA management actions
+# consider the sensitivity of resilience projections to the assumptions made about future greenhouse gas emissions
+# mapping of shallow marine habitats
+
+
+#methodological advancement
+# assess the ability to model and map six indicators of coral reef resilience
+# develop a methodology for assimilating regional-scale data into a potential measure of remote sensed reef resilience
+# develop a novel method to integrate exposure with socialâ€“ecological vulnerability analyses
+# present an approach to mapping reef resilience factors
+# describe a detailed and adaptable process that can guide the implementation of ecological resilience assessments in coral reef areas
+#design and implement a rapid assessment protocol to monitor and quantify bleaching
+
+#evaluate mgt effectiveness
+# evaluate the effectiveness of a management intervention (report on the effectiveness of the No Anchoring Areas from in-water surveys of anchor damage conducted since 2008)
+# consider how a management intervention might improve resilience
+
+#Measure health/state/condition
+# determine ecological significance
+# provide preliminary data on fish diversity and abundance, benthic cover, coral population structure and coral health to assess the resilience or health
+
+
+#Exclude
+# a baseline study of the state - exclude as same study already selected Measure health/state/condition
+# quantify vulnerability to climate change quantify vulnerability to human stressors - already capturd under Vulnerability assessment
+# identify sites in excellent health; exclude as already got this assessment under measure health
+
+
+# characterise resilience -> spatial distribution of res potential
+# resilience relative to other reefs in the region -> spatial distribution of res potential
+
+
+#identify drivers of resilience
+# Determine the drivers of differences in resilience potential between sites
+# Determine the primary drivers of differences in resilience potential between sites
+# understanding of the different factors that affect the health of individual sites
+
+# test accuracy of resilience assessment outputs
+# test the capacity of the resilience assessments to predict spatial variability in the severity of bleaching responses
+
+#pending issues
+# develop a novel method to integrate exposure with socialâ€“ecological vulnerability analyses
+# provide preliminary data on fish diversity and abundance, benthic cover, coral population structure and coral health to assess the resilience or health
+# provide recommendations on management of coral reefs within the Marine Protected Area
+# quantify vulnerability to climate change quantify vulnerability to human stressors
+# test the capacity of the resilience assessments to predict spatial variability in the severity of bleaching responses
+# design and implement a rapid assessment protocol to monitor and quantify bleaching
+
+
+data_long %<>%  
+    mutate(`objectives`= values  %>% factor() %>%
+                                 fct_recode(`other management actions/plans or recommendations` = "to establish a spatial plan for managing the inshore marine waters of Djibouti to support the planning and development of the coastline",
+                                            `other management actions/plans or recommendations` = "development of MPA zoning plans using socioeconomic objectives and criteria",
+                                            `other management actions/plans or recommendations` = "provide recommendations  on  management of coral reefs within the Marine Protected Area",
+                                            `other management actions/plans or recommendations` = "biodiversity data to assist in guiding conservation actions and marine priority sites identification",
+                                            `other management actions/plans or recommendations` = "integration of resilience information into planning or decision support tools",
+                                            `bleaching assessment` = "rapid bleaching assessment",
+                                            `bleaching assessment` = "assess bleaching severity",
+                                            `bleaching assessment` = "coral bleaching and disease prevalence",
+                                            `other research` = "whether the abundance of S. planifrons depended on the avail-ability of its preferred habitat (large Orbicellacorals), general benthic community characteristics or the abundance of potential predators",
+                                            `other research` = "identify locally framed indicators of well-being and, in doing so, to support planning at the four sites.",
+                                            `other research` = "evaluate the effects of increasing human populations on fishes, corals, macro invertebrates, and macroalgal assemblages across four atolls",
+                                            `other research` = "identify local stressors adversely impacting coral reef resilience that can be influenced by MPA management actions",
+                                            `other research` = "mapping of shallow marine habitats",
+                                            `other research` = "consider the sensitivity of resilience projections to the assumptions made about future greenhouse gas emissions",
+                                            `methodological advancement` = "assess the ability to model and map six indicators of coral reef resilience",
+                                            `methodological advancement` = "develop a methodology for assimilating regional-scale data into a potential measure of remote sensed reef resilience",
+                                            `methodological advancement` = "develop a novel method to integrate exposure with socialâ€“ecological  vulnerability  analyses",
+                                            `methodological advancement` = "present an approach to mapping reef resilience factors",
+                                            `methodological advancement` = "describe a detailed and adaptable process that can guide the implementation of ecological resilience assessments in coral reef areas",
+                                            `methodological advancement` = "design  and  implement  a  rapid  assessment  protocol  to  monitor  and  quantify bleaching",
+                                            `evaluate mgt effectiveness` = "evaluate the effectiveness of a management intervention (report on the effectiveness of the No Anchoring Areas from in-water surveys of anchor damage conducted since 2008)",
+                                            `evaluate mgt effectiveness` = "consider how a management intervention might improve resilience",
+                                            `Measure health/state/condition` = "determine ecological significance",
+                                            `Measure health/state/condition` = "provide preliminary  data  on fish  diversity  and  abundance,  benthic cover, coral population structure and coral health to assess the resilience or health",
+                                            `spatial distribution of res potential` = "characterise resilience",
+                                            `spatial distribution of res potential` = "resilience relative to other reefs in the region",
+                                            `identify drivers of resilience` = "Determine the drivers of differences in resilience potential between sites",
+                                            `identify drivers of resilience` = "Determine the primary drivers of differences in resilience potential between sites",
+                                            `identify drivers of resilience` = "understanding of the different factors that affect the health of individual sites",
+                                            `test accuracy of resilience assessment outputs` = "test the capacity of the resilience assessments to predict spatial  variability  in  the  severity  of  bleaching  responses",
+                                           exclude = "a baseline study of the state",
+                                           exclude = "quantify vulnerability to climate change\nquantify vulnerability to human stressors",
+                                           exclude = "identify sites in excellent health")) %>%
+  filter(!objectives=='exclude') %>% 
+  mutate_all(na_if,"") %>%  #make blanks into NAs
+  na.omit()
+
+
+#will just need to create a new matrix with the method and frequency
+data_plot<-data_long %>%  #
+   count(objectives)  #frequency count of responses
+
+#calculate percentage occurences based on 33 Yes responses
+data_plot$percent<-(data_plot$n/nrow(data)*100) %>% round(1)
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data_plot, aes(x= factor(objectives), y=percent)) +
+  geom_bar(stat = "identity", color = "black", fill = "grey") +
+  theme_bw()+
+  xlab('')+
+  ylab('Percentage of assessments')+
+  theme(legend.position = 'none')+
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust=1),
+        panel.border = element_blank(),
+        axis.text = element_text(size=12.5),
+        axis.line = element_line(colour = "black"))
+
+
+```
+
+List of assessments which are Other assessments but not health/state
+BR_2019_Ecuador -  quantify coral community differences between reef areas (islands) -> reef health/state assessment
+LG_2019_RedSea - atlas of extreme warming events -> pressure assessment
+CL_2021_Moorea - cumulative impact assessment (pressure assessment) -> pressure assessment
+MW_2021_Chagos - coral reef stress exposure index -> pressure assessment
+RM_2018_Brazil - Pressure assessment - assess exposure of reefs to multiple stressors -> pressure assessment
+MH_2019_Malaysia -  investigate ecological  adaptation  in  the  reef  community  in  a  turbid water environment 
+- assess  the  benthic  composition  and  coral genera   diversity  -> reef health/state assessment
+CM_2019_GBR - develop	 a	high resolution	 dynamic	 model	 of	coral	 cover -> other
+JM_2019_Maui -  assess benthic cover ->  reef health/state assessment
+EM_2012_Micronesia ->  Vulnerability assessment 
+JM_2017_Guam - assess benthic cover -> reef health/state assessment
+DO_2011_Madagascar - biodiversity assessment; Vulnerability assessment ->  biodiversity assessment
+CCU_2018_DomRep - biodiversity assessment ->  biodiversity assessment
+JH_2017_Indonesia - Vulnerability assessment -> Vulnerability assessment 
+JM_2016_PNG - Vulnerability assessment -> Vulnerability assessment 
+PH_2016_Micronesia - long-term monitoring; identify high resilience areas -> reef health/state assessment
+DO_2014_Myanmar - biodiversity assessment ->  biodiversity assessment
+AF_2014_Farquhar - determine ecological significance -> reef health/state assessment
+ 
+List of assessments which are None of the above (though a lot will drop out after filtering)
+TM_2012_ KarimunjawaIslands - develop empirical selection criteria for resilience indicators -> Measure resilience potential
+MRT_2020_ETP -> Resilience assessment 
+SP_2018_VirginIsl - design map-based decision-support tool -> other
+JC_2021_Global - identify drivers of reef health -> identify drivers of health/resilience
+KB_2020_Hawaii - develop methods and approach for coral health card to assess and quantify coral bleaching -> other
+CCS_2021_GBR - elucidate the main drivers/stressors of coral reef decline -> identify drivers of health/resilience
+RB_2014_GBRa - describe the RHIS protocol methodology  -> other
+AF_2018_FIJI - evaluate the effectiveness of local management -> evaluate management effectiveness 
+DW_2022_GBR -> research
+MD_2020_ -> research
+AC_2020_Revillagigedo - identify high resilience areas; Other: - characterization of the oceanographic conditions and reef coral community  -> reef health/state assessment
+EK_2020_Indonesia -  - provide guidance and feedback on coral reef condition;identify benthic community changes and drivers of change" -> reef health/state assessment
+BC_2018_ -> Unknown
+MS_2016_Dijbouti - establish a spatial plan
+MV_2015_Bonaire - research
+JMC_2018_SolomonIslands -identify locally framed indicators of well-being -> other
+RB_2014_GBRb - evaluate the effectiveness of a management intervention -> evaluate management effectiveness
+SM_2015_RajaAmpat -> establish a spatial plan
+SS_2008_NorthernLineIslands -> reef health/state assessment
+AK_2013_Fiji -> Measure resilience potential
+
+
+if they have Other assessments and Measure health/state/condition
+we have vulnerability, pressure, biodiversity, resilience and state/health assessments: group these into (biodiversity and state/health assessments) AND (vulnerability, pressure,resilience) 
+None of the above - other, (evaluate management effectiveness or establish a spatial plan), research
+
+most efficient way to do this:
+if they have Measure health/state/condition in What were the study objectives? then assign biodiversity and state/health assessments
+then for each one of the assessments listed above would have to do it individually using Study.ID and adding directly into What were the study objectives? (concise) either replacing Other assessment(s) or None of the above if that is possible 
+doesn't need to be added to the string, can be added as an extra column once we split the string and then remove all the rows with the responses that have been replaced
+
+```{r objectives_concise, eval=TRUE}
+
+data$What.were.the.study.objectives...concise. %>% unique()
+
+data$Study.ID[data$What.were.the.study.objectives...concise.==""]
+#was initially "Sanabria-Fernandez 2019" "Dias 2020"               "Perkins 2020"
+#but all excluded now
+
+#Create a seperate dataset
+obj_concise<-data %>% 
+              mutate(obj2=`What.were.the.study.objectives...concise.`) %>% 
+                select(Study.ID.1,obj2,What.were.the.study.objectives.) 
+
+#Steps to get the frequency occurence of responses:
+#need to create a unique list of responses
+#first seperate responses into different columns
+#rbind the columns into a single column/vector
+#peform unique function on this
+#recode the factors where necessary 
+#perform unique to get final list
+
+#re-classify the objectives for some of the studies (listed above)
+# 1. assessments which are Other assessments but not health/state
+# 2. assessments which are None of the above
+# 3. have Measure health/state/condition in What were the study objectives? then assign biodiversity and state/health assessments
+
+#can then paste them together into the same string as the other responses maybe
+health<-grepl('Measure health/state/condition',obj_concise$What.were.the.study.objectives.,fixed=TRUE)
+
+#Study.ID's to change to biodiversity and state assessments
+state<-Cs(BR_2019_Ecuador,
+          MH_2019_Malaysia,
+          JM_2017_Guam,
+          DO_2011_Madagascar,
+          CCU_2018_DomRep,
+          PH_2016_Micronesia,
+          DO_2014_Myanmar,
+          AF_2014_Farquhar,
+          AC_2020_Revillagigedo,
+          EK_2020_Indonesia,
+          SS_2008_NorthernLineIslands)
+
+which(obj_concise$Study.ID.1==state)
+
+#vulnerability, pressure,resilience
+vuln<-Cs(LG_2019_RedSea,
+CL_2021_Moorea,
+MW_2021_Chagos,
+RM_2018_Brazil ,
+EM_2012_Micronesia,
+JH_2017_Indonesia,
+JM_2016_PNG,
+MRT_2020_ETP) 
+#None of the above
+
+#other (or unknown)
+other<- c("CM_2019_GBR","SP_2018_VirginIsl","KB_2020_Hawaii","RB_2014_GBRa","BC_2018_","JMC_2018_SolomonIslands")
+
+#evaluate management effectiveness or establish a spatial plan
+mgt<-Cs(AF_2018_FIJI,
+MS_2016_Dijbouti,
+RB_2014_GBRb,
+SM_2015_RajaAmpat)
+
+#research
+research<-Cs(DW_2022_GBR,
+MD_2020_,
+MV_2015_Bonaire) 
+
+#Measure resilience potential - dont need this as been changed at source
+# res_pos<-c("TM_2012_ KarimunjawaIslands",
+# "AK_2013_Fiji")
+#easiest is to change this at source because this also affects the scoring of assessments (next section) based on whether they measure resilience potential or not
+
+#Identify drivers of resilience
+
+#identify drivers of health/resilience
+drivers<-Cs(JC_2021_Global,
+CCS_2021_GBR)
+
+
+obj_concise %<>% 
+mutate(
+    obj_new = case_when( health ~ "biodiversity and state assessments",
+                         Study.ID.1 %in% state ~ "biodiversity and state assessments",
+                         Study.ID.1 %in% other  ~ "other",
+                         Study.ID.1 %in% vuln ~ "vulnerability, pressure,resilience assessments",
+                         Study.ID.1 %in% mgt ~ "evaluate management effectiveness or establish a spatial plan",
+                         Study.ID.1 %in% research ~ "research",
+                         # Study.ID.1 %in% res_pos ~ "Measure resilience potential",
+                         Study.ID.1 %in% drivers ~ "Identify drivers of resilience")
+   )
+
+
+#how to use the revised objectives in the calculation of the score
+
+#split by ; into individual columns
+
+str_split_fixed(obj_concise$obj2, ";",5) #nothing in cols 5, so can shorten to 4
+
+obj2_split<-str_split_fixed(obj_concise$obj2, ";", 4)  %>% as.data.frame()
+obj2_split$obj_new<-obj_concise$obj_new #add bj_new 
+obj2_split$study<-obj_concise$Study.ID.1
+
+#Change from wide to single, long column
+data_long <- gather(obj2_split,study, values, V1:obj_new, factor_key=TRUE)
+
+#2 cleaning steps: 1. remove leading whitespace, 2. remove leading whitespace
+#remove - at start of some strings
+data_long$values<-sub("^\\s+", "", data_long$values) #removesleading whitespace
+
+data_long$values<-sub("^\\s+", "", data_long$values) #removesleading leading whitespace
+
+#since there are no blanks or individual/unique responses just the 6 options for responses, then no need to go through the usual steps, just remove all blanks from the long dataset and count frequency of occurence
+
+#change all Identify drivers of resilience to identify drivers of health/resilience
+#remove None of the above and Other assessment(s)
+
+data_long %<>%
+  mutate(values=values  %>% factor() %>%
+                fct_recode(`Identify drivers of resilience/health` = "Identify drivers of resilience")) %>% 
+  filter(values!="Other assessment(s)" & values != "None of the above")
+
+#CREATE NEW FACTOR GROUPINGS
+
+
+#will just need to create a new matrix with the method and frequency
+data_plot<-data_long %>%  #
+  mutate_all(na_if,"") %>%  #make blanks into NAs
+  na.omit() %>%    #remove the NAs
+  count(values)  #frequency count of responses
+
+#calculate percentage occurences 
+data_plot$percent<-(data_plot$n/nrow(data)*100) %>% round(1)
+
+#plot
+#produce a simple frequency histogram of occurences of totals - percentage of assessments with each total
+ggplot(data_plot, aes(x= reorder(factor(values),percent), y=percent)) +
+  geom_bar(stat = "identity",  fill = "#00AFBB") +
+  theme_bw()+
+  xlab('')+
+  ylab('Percentage of assessments')+
+  coord_flip()+
+  theme(legend.position = 'none')+
+  theme(axis.text.x = element_text())+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=15),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=15))
+
+
+```
+
+
+
+
+#Criteria to distinguish assessments
+
+Do any of the study objectives match those listed here (tick all that apply)
+- Standardise 'other' values
+- bar plot showing frequency of responses
+Was there a single, clear definition of resilience?
+- bar plot showing frequency of responses
+Resilience definitions
+- Word cloud of most common terms
+Was there a dedicated section specifically to assess resilience potential?
+- bar plot showing frequency of responses
+Were variables normalised?
+How were variables translated into indicators?
+-Bar plot: results of normalised (Yes, No, Unclear), stacked by method of normalisation
+Did the results infer something about the resilience potential?
+bar plot showing frequency of responses
+
+## Was there a single, clear definition of resilience?
+
+```{r resilience_definition, eval=TRUE}
+
+# Was there a single, clear definition of resilience?
+# - bar plot showing frequency of responses
+data$Was.there.a.single..clear.definition.of.resilience. %>% unique()
+# "Yes" "No" 
+
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data, aes(x= factor(Was.there.a.single..clear.definition.of.resilience.))) +
+  geom_bar(aes(fill=Was.there.a.single..clear.definition.of.resilience.))+
+  theme_bw()+
+  xlab('Resilience Definition')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+   theme( panel.border = element_blank(),
+        text = element_text(size=18),
+        axis.text = element_text(size=18),
+        axis.line = element_line(colour = "black"))
+
+cat('\n')
+print('does this work')
+cat('\n')
+
+
+# Resilience definitions - world cloud
+library("tm")
+library("SnowballC")
+library("wordcloud")
+library("wordcloud2")
+library("RColorBrewer")
+library("Rcpp")
+
+# - Word cloud of most common terms
+#Create a vector containing only the text
+text <- data$Resilience.definition
+# Create a corpus  
+docs <- Corpus(VectorSource(text))
+
+docs <- docs %>%
+  tm_map(removeNumbers) %>%
+  tm_map(removePunctuation) %>%
+  tm_map(stripWhitespace)
+
+docs <- tm_map(docs, content_transformer(tolower))
+docs <- tm_map(docs, removeWords, stopwords("english"))
+               
+dtm <- TermDocumentMatrix(docs) 
+matrix <- as.matrix(dtm) 
+words <- sort(rowSums(matrix),decreasing=TRUE) 
+df <- data.frame(word = names(words),freq=words)
+
+#phase has inverted commas
+df$word<-gsub("‘phase’","phase",df$word)
+
+set.seed(1234) # for reproducibility 
+wordcloud(words = df$word, freq = df$freq, min.freq = 1,      
+          max.words=200, random.order=FALSE, rot.per=0.35,            
+          colors=brewer.pal(8, "Dark2"))
+
+
+
+```
+
+
+##Were variables normalised?
+
+```{r normalised_variables, eval=TRUE}
+
+# - bar plot showing frequency of responses
+data$Were.variables.normalised.%>% unique()
+#"Yes"             "Unclear"         "None (raw form)" "Not applicable"
+
+factor_order<-c("None (raw form)","Yes","Unclear","Not applicable")
+
+data %<>%  mutate(`Normalised_Variables`=`Were.variables.normalised.`  %>% factor(levels = factor_order) %>%
+                                 fct_recode(No = "None (raw form)",
+                                            `Unclear/NA`= "Unclear",
+                                           `Unclear/NA`="Not applicable")) 
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data, aes(x= factor(Normalised_Variables))) +
+  geom_bar(aes(fill=Normalised_Variables))+
+  theme_bw()+
+  xlab('Variable form')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=15),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=15))
+
+
+```
+
+
+##How were variables translated into indicators?
+
+```{r translating_variables, eval=TRUE}
+
+# - bar plot showing frequency of responses
+data$What.reference.was.used.to.translate.variables.into.indicators.%>% unique()
+#many values
+
+#Out of all the Yes for Normalised indicators, calculate for each reference method, what percentage of assessments each was used for
+
+#Create a seperate dataset
+normalised<-data %>% 
+              filter(`Were.variables.normalised.`=='Yes') %>% 
+              mutate(normalise_method=`What.reference.was.used.to.translate.variables.into.indicators.`) %>% 
+                select(Study.ID.1,normalise_method) 
+
+#Steps to get the frequency occurence of responses:
+#need to create a unique list of responses
+#first seperate responses into different columns
+#rbind the columns into a single column/vector
+#peform unique function on this
+#recode the factors where necessary 
+#perform unique to get final list
+
+
+
+#split by ; into individual columns
+normalised$normalise_method<-gsub("Other:","",normalised$normalise_method)
+
+str_split_fixed(normalised$normalise_method, ";", 6) #nothing in cols 4-6, so can shorten to 3
+
+normal_split<-str_split_fixed(normalised$normalise_method, ";", 3)  %>% as.data.frame()
+normal_split$study<-normalised$Study.ID.1
+
+
+#Change from wide to single, long column
+data_long <- gather(normal_split,study, values, V1:V3, factor_key=TRUE)
+
+#3 cleaning steps: 1. remove leading whitespace, 2. remove leading -, 3. remove leading whitespace
+#remove - at start of some strings
+data_long$values<-sub("^\\s+", "", data_long$values) #removesleading whitespace
+
+data_long$values<- gsub('^\\-|\\-$', '', data_long$values) #removes leading -
+
+data_long$values<-trimws(data_long$values) #removesleading leading whitespace
+
+
+#FINAL unqiue list - was 25 and now is 24
+normalised_list_final<-data_long$values %>% unique() %>% as.data.frame()
+
+#values to group
+# estimated on a relative scale
+# estimated on a semi-quantitative relative scale (1-5)
+# estimated on semi-quantitative ordinal scale
+# estimated on semi-quantitative scale
+# estimated on a semi-quantitative scale
+# some indicators estimated on a relative-scale
+# estimated on scale based on subjective (expert) opinion of poor and good conditions for corals
+
+#These are from 3 assessments, all of which also have the response:relative-scale using range of variable scores: 
+#1. DO_2009_NosyHara - explanation: A  semi-quantitative  5-point  scale  was  used  for  estimation  of  most  of  the  indicators
+#2. JM_2012_Indonesia - Factors assessed semi-quantitatively using expert judgment were estimated
+#3. GG_2011_Bonaire - A semi-quantiative 5-point scale was used for estimation of most of the indicators
+# converted to semi-quantitative scale
+# converted to a semi-quantiative 5-point scale
+# converted to relative semi-quantitative scale
+
+# Unknown/Unclear -> not stated (but likely against highest indicator value)
+# 
+# thresholds from published research - exclude
+
+#could consider estimated on scale and converted to scale as separate 
+
+data_long %<>%  mutate(`Normalisation_methods`= values  %>% factor() %>%
+                                 fct_recode(`Unknown/Unclear` = "not stated (but likely against highest indicator value)",
+                                            `estimated on semi-quantitative ordinal scale`= "estimated on a relative scale",
+                                            `estimated on semi-quantitative ordinal scale`="estimated on a semi-quantitative relative scale (1-5)",
+                                            `estimated on semi-quantitative ordinal scale`="estimated on semi-quantitative scale",
+                                            `estimated on semi-quantitative ordinal scale`="estimated on a semi-quantitative scale",
+                                            `estimated on semi-quantitative ordinal scale`="some indicators estimated on a relative-scale",
+                                            `estimated on semi-quantitative ordinal scale`="estimated on scale based on subjective (expert) opinion of poor and good conditions for corals",
+                                            `estimated on semi-quantitative ordinal scale`="converted to semi-quantitative scale",
+                                            `estimated on semi-quantitative ordinal scale`="converted to a semi-quantiative 5-point scale",
+                                            `estimated on semi-quantitative ordinal scale`="converted to relative semi-quantitative scale",
+                                            
+                          `Unknown/Unclear` = "Unknown",
+                          `Unknown/Unclear` = "Unclear" ,
+                          `best (maximum) and worst (minimum) values`= "a community with the best (maximum) and worst (minimum) values in all n indicator variables",
+                          `estimated on semi-quantitative ordinal scale`="estimated on relative scale",
+                          `estimated on semi-quantitative ordinal scale`="estimated on relative scale (unsure how scaled)",
+                          `estimated on semi-quantitative ordinal scale`="estimated or converted to relative scale",
+                          `estimated on semi-quantitative ordinal scale`="estimated on a relative-scale",
+                          `estimated on semi-quantitative ordinal scale`="estimated on a relative scale using general threshold",
+                          `estimated on semi-quantitative ordinal scale`="estimated on a relative scale using general thresholds",
+                          `estimated on semi-quantitative ordinal scale`="converted and estimated to semi-quantitative scale",
+                          # `estimated on a semi-quantitative scale`="estimated on semi-quantitative ordinal scale",
+                          `estimated on semi-quantitative ordinal scale`="recorded on a semi-quantitative scale",
+                          `estimated on semi-quantitative ordinal scale`= "estimated on relative-scale",
+                          `best (maximum) and worst (minimum) values`="highest and lowest values of each indicator from an independent source (report) and legally permitted thresholds for environmental parameters",
+                          `estimated on semi-quantitative ordinal scale`="a level or value produced based on quartiles of range of possible values (e.g. 0-25%, 26-50% etc.)",
+                          `estimated on semi-quantitative ordinal scale`="directly scored from one (lowest resilience) to five (highest resilience)\n- empirical indicators were statistically scaled from 1 to 5",
+                          `other`="proportion of survey area",
+                          `reference state or time point`="reference state or time point e.g. historical point",
+                          `other`="using proportion/percentage values directly (dividing by 100)",
+                          `estimated on semi-quantitative ordinal scale`="relative-scale using range of variable scores"))
+
+
+#will just need to create a new matrix with the method and frequency
+data_plot<-data_long %>%  #
+  mutate_all(na_if,"") %>%  #make blanks into NAs
+  na.omit() %>%    #remove the NAs
+  count(Normalisation_methods)  #frequency count of responses
+
+#calculate percentage occurences based on 33 Yes responses
+data_plot$percent<-(data_plot$n/nrow(normalised)*100) %>% round(1)
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+# ggplot(data_plot, aes(x= factor(Normalisation_methods), y=percent)) +
+#   geom_bar(stat = "identity", color = "black", fill = "grey") +
+#   theme_bw()+
+#   xlab('')+
+#   ylab('Percentage of normalised assessments')+
+#   coord_flip()+
+#   theme(legend.position = 'none')+
+#   theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust=1))+
+#   theme( panel.border = element_blank(),
+#         axis.text = element_text(size=12.5),
+#         axis.line = element_line(colour = "black"),
+#         text = element_text(size=13))
+
+
+```
+
+```{r translating_variables_table, results='asis'}
+
+kable(data_plot, caption = "References used to normalise indicators", 
+      row.names = FALSE) %>% 
+  kable_styling(full_width = F)
+
+```
+
+
+##Reference class
+```{r reference_type, eval=TRUE}
+
+# - bar plot showing frequency of responses
+data$Reference.class%>% unique()
+# [1] "Reference within dataset"                "Independent reference; Unclear/Unknown "
+# [3] "Unclear/Unknown "                        "Independent reference"                  
+# [5] ""                                        "Reference within dataset; Other"  
+
+#Create a seperate dataset
+ref_class<-data %>% 
+              mutate(ref_class=`Reference.class`) %>% 
+                select(Study.ID.1,ref_class,Were.variables.normalised.) 
+
+#what do the blanks mean - should be for assessments which did not normalise variables
+#check this
+
+#manual check
+#all the Yes normalised values have a response
+#the Unclear have 2 blanks and 1 Unclear - check the 2 blanks - MS_2016_Dijbouti;JMC_2018_SolomonIslands
+#all the None (raw) are blank - this is fine
+
+#JMC_2018_SolomonIslands is not a res pot assessment, and does not have quantitative variables/indicators, so the response for are variables normalised should be NA (which is not an option, but should be added)
+
+#MS_2016_Dijbouti - there is a resilience score for each site and individual indicator results are presented in standard units (for most), but no methods, so you would assume from having a resilience and resistance aggregated score that indicators were normalised, but don't know the methods. So change Were variables normalised answer to Yes, and reference class to Unclear/Unknown
+
+
+#Steps to get the frequency occurence of responses:
+
+#split by ; into individual columns
+str_split_fixed(ref_class$ref_class, ";", 4) #nothing in col 3-4, so can shorten to 2
+
+ref_class_split<-str_split_fixed(ref_class$ref_class, ";", 2)  %>% as.data.frame()
+ref_class_split$study<-ref_class$Study.ID.1
+ref_class_split$normalised<-ref_class$Were.variables.normalised.
+
+#there was a problem where - in total there are 56 entries from 54 assessments which have normalised variables
+#was counting a total of 60 with 4 extra entries where it was unclear if the variables were normalised
+#so now need to filter to keep just normalised variables before data_long is produced 
+ref_class_split %<>% filter(`normalised`=='Yes')
+
+
+
+#Change from wide to single, long column
+data_long <- gather(ref_class_split,study, values, V1:V2, factor_key=TRUE)
+
+#cleaning steps: 1. remove leading whitespace
+#remove - at start of some strings
+data_long$values<-sub("^\\s+", "", data_long$values) #removesleading whitespace
+data_long$values<- sub("\\s+$", "", data_long$values) #removes trailing whitespace
+
+
+
+#all the blanks are not true blanks, they are artifacts of the method (make the dataset wide)
+
+
+#will just need to create a new matrix with the method and frequency
+data_plot<-data_long %>%  #
+  mutate_all(na_if,"") %>%  #make blanks into NAs
+  na.omit() %>%    #remove the NAs
+  count(values)  #frequency count of responses
+  #frequency count of responses
+
+#calculate percentage occurences based on Yes responses to were variables normalised
+np<-ref_class %>% 
+  filter(`Were.variables.normalised.`=='Yes') %>% 
+   nrow()
+
+
+data_plot$percent<-(data_plot$n/np*100) %>% round(1)
+
+data_plot$values %>% unique()
+
+factor_order<-c("Independent" ,"Within dataset", "Unclear/Unknown","Other")
+
+data_plot %<>%  mutate(values=values %>% factor(levels = factor_order))
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data_plot, aes(x= factor(values), y=percent)) +
+  geom_bar(stat = "identity",  fill = "#00AFBB") +
+  theme_bw()+
+  xlab('')+
+  ylab('Percentage of assessments')+
+  theme(legend.position = 'none')+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=15),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=15))
+
+
+```
+
+
+```{r ref_type_method_plot}
+#if I want to proportion of in the different reference classes than I need to combine the two datasets into one
+
+#would need to go back and check to see if I can tease apart those that did not have a reference and just directly estimated on a relative-scale, and those that converted to a relative-scale and what method was used for that
+normalise<-data %>% 
+  filter(`Were.variables.normalised.`=='Yes') %>% 
+              mutate(ref_class=`Reference.class`) %>% 
+                mutate(normalise_method=`What.reference.was.used.to.translate.variables.into.indicators.`) %>% 
+                select(Study.ID.1,ref_class,normalise_method) 
+
+normalise$normalise_method <- gsub("estimated on a semi-quantitative relative scale (1-5)","estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on a semi-quantitative scale","estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("some indicators estimated on a relative-scale","estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on scale based on subjective (expert) opinion of poor and good conditions for corals","estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("converted to semi-quantitative scale","estimated on semi-quantitative ordinal scale",  normalise$normalise_method)
+normalise$normalise_method <- gsub("converted to a semi-quantiative 5-point scale","estimated on semi-quantitative ordinal scale",  normalise$normalise_method)
+normalise$normalise_method <- gsub("converted to relative semi-quantitative scale","estimated on semi-quantitative ordinal scale",  normalise$normalise_method)
+normalise$normalise_method <- gsub("Unknown", "Unknown/Unclear", normalise$normalise_method)
+normalise$normalise_method <- gsub("Unclear", "Unknown/Unclear", normalise$normalise_method)
+normalise$normalise_method <- gsub("Unknown/Unknown/Unclear", "Unknown/Unclear", normalise$normalise_method)
+normalise$normalise_method <- gsub("not stated (but likely against highest indicator value)","Unknown/Unclear", normalise$normalise_method)
+normalise$normalise_method <- gsub("not stated \\(but likely against highest indicator value\\)", "Unknown/Unclear", normalise$normalise_method)
+normalise$normalise_method <- gsub("a community with the best \\(maximum\\) and worst \\(minimum\\) values in all n indicator variables", "best (maximum) and worst (minimum) values", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on relative scale", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on relative scale \\(unsure how scaled\\)", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated or converted to relative scale", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on a relative-scale", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on a relative scale using general threshold", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on a relative scale using general thresholds", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("converted and estimated to semi-quantitative scale", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on semi-quantitative scale", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("recorded on a semi-quantitative scale", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on relative-scale", "estimated on semi-quantitative ordinal scale",normalise$normalise_method)
+normalise$normalise_method <- gsub("highest and lowest values of each indicator from an independent source \\(report\\) and legally permitted thresholds for environmental parameters", "best (maximum) and worst (minimum) values", normalise$normalise_method)
+normalise$normalise_method <- gsub("a level or value produced based on quartiles of range of possible values \\(e.g. 0-25%, 26-50% etc.\\)", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("directly scored from one \\(lowest resilience\\) to five \\(highest resilience\\)\\n- empirical indicators were statistically scaled from 1 to 5", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("proportion of survey area", "other", normalise$normalise_method)
+normalise$normalise_method <- gsub("reference state or time point e.g. historical point", "reference state", normalise$normalise_method)
+normalise$normalise_method <- gsub("using proportion/percentage values directly \\(dividing by 100\\)", "other", normalise$normalise_method)
+normalise$normalise_method <- gsub("relative-scale using range of variable scores", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on a semi-quantitative relative scale \\(1-5\\)", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on scale based on subjective \\(expert\\) opinion of poor and good conditions for corals", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on semi-quantitative ordinal scale \\(unsure how scaled\\)", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on a relative scale", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+normalise$normalise_method <- gsub("estimated on semi-quantitative ordinal scales", "estimated on semi-quantitative ordinal scale", normalise$normalise_method)
+
+
+# estimated on a semi-quantitative relative scale (1-5)
+
+
+normalise$normalise_method <- gsub("Other: - ", "", normalise$normalise_method)
+normalise$normalise_method <- gsub("Other: ", "", normalise$normalise_method)
+normalise$normalise_method <- gsub(";  -", "; ", normalise$normalise_method)
+normalise$normalise_method <- gsub("; -", "; ", normalise$normalise_method)
+
+#identified issues which need changing in normalise
+#JK_2009_Kenya - change the ref_class to Independent; Within & normalise_method is only estimated on semi-…
+# DO_2008_Amirantes - for ref_class can probably change to Independent as In all cases, a low score of 1 indicates poor conditions for corals, and 5 indicates good conditions for corals. (so seems broader than local)
+# RS_2016_Chuuk - the fact they say set thresholds, can probably infer it is independent
+# RS_2017_Palau - same logic, thresholds are general so can assume independent
+# Bang_2021_Taiwan - within reference
+# RA_2014_India - change to Independent (regional thresholds)
+# MC_2014_Thailand - being generous - could lean to Independent
+# DO_2014_Myanmar - for ref_class can probably change to Independent as In all cases, a low score of 1 indicates poor conditions for corals, and 5 indicates good conditions for corals. (so seems broader than local)
+
+#however same issue here where the number of normalisation methods > total number of assessments
+#there are 3 assessments which have two ref_classes listed - JK_2009_Kenya, JM_2012_Indonesia, LR_2014_Micronesia
+#however for the other two need to see if each ref_class is linked to a single or both normalise_methods, to avoid double-counting
+
+#JK_2009 only has 1 normalise_method 'estimated on semi-quantitative ordinal scale' which gets applied to both ref_class, so that is fine
+# In the 5-point scale general principles were to assign them as follows: minimum (1), maximum (5) and moderate (3) level for each indicator for the region of application
+#For each indicator, levels 1 to 5 were assigned according to local minimum/maximum levels and the distribution of values in between
+#within for sure since they say local min/max
+#likely the variables which were estimated (not coverted) were independent - regional
+#no further changes for this one, just those stated above
+
+#JM_2012 - Independent ; Unclear/Unknown = estimated on semi-quantitative ordinal scale
+#Some were converted and some estimated on ordinal scale, but it doesn't explicitly say that the conversion of quantitative variables was done using range of variable scores
+# All  factors  were  converted  to  a Likert  scale  by  assigning  a  score  of  1  to  5  for  each factor  for  each  site.
+# difficult to tell, but does hint at using regional knowledge - estimated  by  one  of  the  authors  (Rizya  Ardiwijawa)  who  was  involved  in  the  resilience assessments undertaken in all other study areas
+# Text in the IUCN (2009) protocol suggests users need to establish these criteria on their own, which we’ve done to standardise scoring here. This has been a time-intensive process though so establishing global criteria is likely to increase uptake and would ensure results from all resilience assessments would be comparable (even between reef regions)
+
+#I think there is enough to go on to make this Independent only
+
+#LR_2014_Micronesia - Within dataset; Other = against highest/lowest variable score; other
+# Each of the four biological parameters was standardized. The coral cover was divided by 100 to determine the percentage of coral cover. The fish density per 150m2 was divided by the highest recorded density in the survey, 70, to get an approximate percentage of the fish density in that reef.The same was conducted for the invertebrates, as the invertebrate density recorded at the site was divided by 5 to solve for the approximate percentage of the invertebrate density in that reef.Coral disease prevalence was divided by 100 to determine the percentage of coral disease incidence.
+# using proportion/percentage values directly (dividing by 100)
+#some are independent and some are other - I would just change the other to within since its just scaling the within values by 100 (gets rid of the other column)
+
+
+normalise %<>%
+  mutate(ref_class = case_when(
+               Study.ID.1 == "JK_2009_Kenya" ~ "Independent; Within dataset",
+               Study.ID.1 %in% c("RA_2014_India", "MC_2014_Thailand", "DO_2014_Myanmar", "DO_2008_Amirantes", "RS_2017_Palau", "RS_2016_Chuuk", "JM_2012_Indonesia") ~ "Independent",
+               Study.ID.1 %in% c("LR_2014_Micronesia","Bang_2021_Taiwan") ~ "Within dataset",
+               TRUE ~ ref_class
+           ),
+         normalise_method = ifelse(Study.ID.1 == "JK_2009_Kenya", "estimated on semi-quantitative ordinal scale", normalise_method))
+
+
+# Calculate sum of ref_class
+ref_class_counts <- normalise %>%
+  distinct(Study.ID.1, ref_class, normalise_method, .keep_all = TRUE) %>% 
+  separate_rows(ref_class, sep = "; ") %>%
+  mutate(ref_class = str_trim(ref_class)) %>%
+  group_by(ref_class) %>%
+  summarise(sum = n(),.groups = "drop")
+
+
+h<-normalise%>%
+  separate_rows(ref_class, sep = "; ")  %>%
+  separate_rows(normalise_method, sep = "; ") %>%
+  mutate(across(c(ref_class, normalise_method), str_trim)) %>% #remove whitespace
+  mutate(normalise_method = ifelse(normalise_method == "", "Unknown/Unclear", normalise_method)) %>% #replace blank with Unknown
+  distinct(Study.ID.1, ref_class, normalise_method, .keep_all = TRUE) %>% 
+  group_by(ref_class, normalise_method) %>%
+  summarise(n = n(),.groups = "drop") %>%
+  spread(normalise_method, n, fill = NA) %>% 
+  left_join(ref_class_counts) %>% 
+  arrange(ref_class)
+
+#are there are issues with duplication 
+#where is one study there are two of the same reference types - removed using distinct above
+#think if this may affect other results
+
+
+
+# Get unique normalization methods and set colors
+norm_methods <- normalise %>% 
+  separate_rows(normalise_method, sep = "; ") %>% 
+  mutate(normalise_method = if_else(normalise_method == "", "Unknown/Unclear", normalise_method)) %>% 
+  distinct(normalise_method) %>% 
+  pull(normalise_method)
+
+colors <- hue_pal()(length(norm_methods))
+
+h %>% 
+    pivot_longer(-c(ref_class, sum)) %>%
+    drop_na() %>% 
+    ggplot(aes(x = ref_class, y = value, fill = name)) +
+    geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 0, ymax = sum), size=1,fill = 'grey',alpha = 0.1, inherit.aes = FALSE) +
+    geom_bar(position = "dodge", stat="identity") +
+    facet_wrap(~ref_class, scales = 'free_x', strip.position = "top")+
+  scale_fill_manual(values = setNames(colors, norm_methods),
+                    name = "Normalization Methods") +
+  labs(x = "Reference class",
+       y = "Number of assessments",
+       fill = "Normalization Methods") +  
+  theme_minimal() +
+  theme(axis.text = element_text(size=15, colour = 'black'),
+        panel.grid.major.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_line(colour = "black"),
+        axis.ticks.x = element_blank(),
+        axis.ticks.length = unit(0.2, "cm"),
+        strip.text.x = element_blank(),
+        panel.grid.major = element_blank(),  # remove major grid lines
+        panel.grid.minor = element_blank(),
+        legend.text = element_text(size=15))
+
+```
+
+
+
+##Did results infer something about the resilience potential
+
+```{r infer_resilience, eval=TRUE}
+
+# - bar plot showing frequency of responses
+data$Did.the.results.infer.something.about.the.resilience.potential.%>% unique()
+# "Quantitative (indicator or index scores or levels) "           
+# "Qualitative only - descriptive inferences on resilience levels"
+# "No"                                                            
+# "Unclear"                                                       
+# "Measured actual response to a disturbance"
+
+
+factor_order<-c("Quantitative (indicator or index scores or levels) " , "Qualitative only - descriptive inferences on resilience levels", "No",  "Measured actual response to a disturbance","Unclear")
+
+
+#change the factor values to shorten, creates a new column called Resilience_inferences
+data %<>%  mutate(`Resilience_inferences`=`Did.the.results.infer.something.about.the.resilience.potential.`  %>% factor(levels = factor_order) %>%
+                                 fct_recode(`Response to disturbance` = "Measured actual response to a disturbance",
+                                           `Qualitative inferences` = "Qualitative only - descriptive inferences on resilience levels" ,
+                                           `Quantitative values` = "Quantitative (indicator or index scores or levels) "))
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data, aes(x= factor(Resilience_inferences))) +
+  geom_bar(aes(fill=Resilience_inferences))+
+  theme_bw()+
+  xlab('Results')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=15),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=15))
+
+
+```
+
+#Criteria to evaluate quality of assessments
+
+
+Was the resilience to what specified?
+- Standardise 'other' values
+- bar plot showing frequency of responses
+Did they establish a conceptual model of reef functioning? (diagram or text)
+- bar plot showing frequency of responses
+Was a clear link made between the resilience factors and the representative variables measured?
+- bar plot showing frequency of responses
+Was there an analytical framework to combine indicators?
+bar plot showing frequency of responses
+
+##Was the resilience to what specified?
+```{r resilience_subject, eval=TRUE}
+
+
+# Was the resilience to what specified?
+# - Standardise 'other' values
+# - bar plot showing frequency of responses
+data$Was.the.resilience.to.what.specified.%>% unique()
+# [1] "No"                                      "Climate change/bleaching"               
+# [3] "Other: Local anthropogenic disturbances" "Other: manageable local stressors"      
+# [5] "Unclear" 
+# "Other: - warming\n- sedimentation" - this is where they assess both warming and sedimentation, so both climate and local stressors; not sure how to manage this
+
+#Bozec - multiple: acute (crownof-thorns starfish outbreaks, cyclones, and mass coral bleaching) and chronic (water-quality) stressors
+#Mellin 2019 - spatial	variation	 in	water	 quality	and	the	cumulative	 effects	of	coral	diseases,	 bleaching,	outbreaks	of	crown of‐thorns	starfish	(Acanthaster	cf.	 solaris),	and	tropical	 cyclones
+
+#so both these can be local stressors and climate change
+
+#a number of blanks cells which should be No
+
+which(data$Was.the.resilience.to.what.specified.=="")
+
+#change the factor values to shorten, creates a new column called Resilience_inferences
+data %<>%  mutate(`Resilience_subject`=`Was.the.resilience.to.what.specified.`  %>% factor() %>%
+                                 fct_recode(`local stressors` = "Other: Local anthropogenic disturbances",
+                                           `local stressors` = "Other: manageable local stressors",
+                                           `local stressors and climate change`="Other:  - multiple (anthropogenic and natural stressors)",
+                                           `not specified` = "",
+                                           `not specified` = "No",
+                                           `local stressors and climate change`="Other: climate change and pollution",
+                                           `fishing`="Other: fishing and associated physical disturbances",
+                                           `local stressors and climate change`="Other: multiple",
+                                           `local stressors and climate change`="Other: - warming\n- sedimentation",
+                                           `local stressors and climate change`="Other: local impacts and climate change")) %>% 
+ mutate(Resilience_subject=gsub("Other: ","",Resilience_subject),
+        Resilience_subject=gsub("-","",Resilience_subject) 
+                            
+)
+
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data, aes(x= factor(Resilience_subject))) +
+  geom_bar(aes(fill=Resilience_subject))+
+  theme_bw()+
+  coord_flip()+
+  xlab('')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=15),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=15))
+
+```
+
+
+
+Not all these assessments are resilience assessments, so after filtering out these, will give us a more relevant picture
+
+##Did they establish a conceptual model of reef functioning? 
+```{r conceptual_models, eval=TRUE}
+
+data$Did.they.establish.a.conceptual.model.of.reef.functioning...diagram.or.text.%>% unique()
+#"No"          "Description" "Model"  
+
+factor_order<-c("No", "Description","Model")
+
+
+#change the factor values to shorten, creates a new column called Resilience_inferences
+data %<>%  mutate(`Did.they.establish.a.conceptual.model.of.reef.functioning...diagram.or.text.`=`Did.they.establish.a.conceptual.model.of.reef.functioning...diagram.or.text.`  %>% factor(levels = factor_order))
+                  
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data, aes(x= factor(Did.they.establish.a.conceptual.model.of.reef.functioning...diagram.or.text.))) +
+  geom_bar(aes(fill=Did.they.establish.a.conceptual.model.of.reef.functioning...diagram.or.text.))+
+  theme_bw()+
+  xlab('Conceptual model')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=15),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=15))
+
+```
+
+
+##Were factors selected to represent resistance and or recovery
+```{r resistance_recovery, eval=TRUE}
+
+data$Were.factors.selected.to.represent.resistance.and.or.recovery.%>% unique()
+#"No"                    "Assessed seperately"   "Considered separately" "Unclear" 
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data, aes(x= factor(Were.factors.selected.to.represent.resistance.and.or.recovery.))) +
+  geom_bar(aes(fill=Were.factors.selected.to.represent.resistance.and.or.recovery.))+
+  theme_bw()+
+  xlab('Resistance and Recovery')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=15),
+        axis.line = element_line(colour = "black"))
+
+```
+
+#Was a clear link made between the resilience factors and the representative variables measured?
+```{r factor_link, eval=TRUE}
+
+data$Was.a.clear.link.made.between.the.resilience.factors.and.the.representative.variables.measured.%>% unique()
+#"No"  "Yes"
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data, aes(x= factor(Was.a.clear.link.made.between.the.resilience.factors.and.the.representative.variables.measured.))) +
+  geom_bar(aes(fill=Was.a.clear.link.made.between.the.resilience.factors.and.the.representative.variables.measured.))+
+  theme_bw()+
+  xlab('Link between resilience factors and variables')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=15),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=15))
+
+```
+
+##Was there an analytical framework to combine indicators?
+```{r analytical_fwork, eval=TRUE}
+
+data$Was.there.an.analytical.framework.to.combine.indicators.%>% unique()
+# [1] "Linear"                     "Did not combine indicators" "Other: mechanistic model"   "Unclear method"            
+# [5] "Unsure if combined"         "No quantitative assessment" "Other: model"
+
+#Other:, change to Unknown, and join No and Unclear
+
+
+#change the factor values to shorten, creates a new column called Resilience_inferences
+data %<>%  mutate(`Analytical_fwork`=`Was.there.an.analytical.framework.to.combine.indicators.`  %>% 
+                  replace(Study.ID.1 == "CM_2019_GBR","Model") %>% 
+                    factor() %>%
+                                 fct_recode(`No/Unclear` = "No",
+                                           `No/Unclear` = "Unclear",
+                                           Other="Other: ",
+                                           `Model`="Other: mechanistic model",
+                                           `Model`="Other: Bayesian hierarchical statistical model",
+                                           `Other`="Other: geometric mean of component scores",
+                                           `Other`="Other: mean of the combined distributions (produced from bootstrapping) for each indicator",
+                                           `Model`="Other: mechanistic and simulation models",
+                                           `Model`="Other: Mechanistic model",
+                                           `Other`="Other: PCA",
+                                           `Other`="Other: TOPSIS method - Euclidean distance from ideal positive and negative position",
+                                           `Did not combine`="Did not combine indicators"))
+
+factor_order<-c("Linear",  "Model","Other" ,"Unclear method", "Unsure if combined","Did not combine"  ,"No quantitative assessment")
+
+data$Analytical_fwork <- factor(data$Analytical_fwork, levels = factor_order) # order the factor variable
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data, aes(x= factor(Analytical_fwork))) +
+  geom_bar(aes(fill=Analytical_fwork))+
+  theme_bw()+
+  xlab('Analytical framework')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=15),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=15),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+```
+
+
+##Sources for variable indicator selection
+```{r sources_indicators, eval=TRUE}
+
+# - bar plot showing frequency of responses
+data$Sources.for.variable.indicator.selection%>% unique()
+#many values - 19 unique combinations
+
+
+#Create a seperate dataset
+indicator_sources<-data %>% 
+              mutate(ind_source=`Sources.for.variable.indicator.selection`) %>% 
+                select(Study.ID.1,ind_source) 
+
+indicator_sources %<>%  mutate(`ind_source2`= ind_source  %>% factor() %>%
+                                 fct_recode(`Unknown/Unclear` = "",
+                                            `McClanahan et al. (2012); Maynard et al. 2015`= "McClanahan et al. (2012) and Maynard et al. 2015",
+                      `McClanahan et al. (2012); Maynard et al. 2015`= "McClanahan et al. 2012, Maynard et al. 2015",
+                      `McClanahan et al. (2012); Maynard et al. 2015`= "Multiple, but mainly McClanahan et al. 2012, and Maynard et al. 2015"))
+
+
+#Steps to get the frequency occurence of responses:
+
+#split by ; into individual columns
+indicator_sources$ind_source2<-gsub("Other:","",indicator_sources$ind_source2)
+
+str_split_fixed(indicator_sources$ind_source2, ";", 3) #nothing in col 3, so can shorten to 2
+
+indicator_sources_split<-str_split_fixed(indicator_sources$ind_source2, ";", 2)  %>% as.data.frame()
+indicator_sources_split$study<-indicator_sources$Study.ID.1
+
+
+#Change from wide to single, long column
+data_long <- gather(indicator_sources_split,study, values, V1:V2, factor_key=TRUE)
+
+#cleaning steps: 1. remove leading whitespace
+#remove - at start of some strings
+data_long$values<-sub("^\\s+", "", data_long$values) #removesleading whitespace
+data_long$values<- sub("\\s+$", "", data_long$values) #removes trailing whitespace
+
+
+#FINAL unqiue list 
+indicator_sources_list_final<-data_long$values %>% unique() %>% as.data.frame()
+
+#all the blanks in V2 are not true Unkowns, they are artifacts of the method (make the dataset wide)
+
+#values to group
+#McClanahan et al. (2012) -> McClanahan et al. 2012
+#Obura  and  Grimsditch  2009 -> Obura and Grimsditch 2009
+#Obura & Grimsditch 2009 -> Obura and Grimsditch 2009
+#Unknown, Unclear, Unspecified, blanks -> Unknown/Unclear
+#Several presented in Table 1, -> Multiple
+
+data_long %<>%  
+  filter(!(study=="V2" & values=="")) %>% 
+  # mutate_all(na_if,"") %>%  #make blanks into NAs
+  # na.omit() %>%
+  mutate(`sources`= values  %>% factor() %>%
+                                 fct_recode(`Unknown/Unclear` = "Unspecified",
+                                            `Unknown/Unclear`= "",
+                                            `McClanahan et al. 2012`="McClanahan et al. (2012)",
+                                            `Obura and Grimsditch 2009`="Obura  and  Grimsditch  2009",
+                                            `Obura and Grimsditch 2009`="Obura & Grimsditch 2009",
+                                            `Multiple`="Several presented in Table 1",
+                                            `Unknown/Unclear` = "Unknown",
+                                            `Unknown/Unclear` = "Unclear" ))
+
+
+#will just need to create a new matrix with the method and frequency
+data_plot<-data_long %>%  #
+   count(sources)  #frequency count of responses
+
+#calculate percentage occurences based on 33 Yes responses
+data_plot$percent<-(data_plot$n/nrow(data)*100) %>% round(1)
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data_plot, aes(x= factor(sources), y=percent)) +
+  geom_bar(stat = "identity", color = "black", fill = "grey") +
+  theme_bw()+
+  xlab('')+
+  ylab('Percentage of assessments')+
+  theme(legend.position = 'none')+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=12.5),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=13))
+
+
+
+```
+
+##Sources for variable/indicator selection (groups)
+
+Added additional categories for Mumby et al. 06,11 and Graham et al. 2011/15 to choices
+
+Checked 10 assessments with Multiple or Other responses which had no information on specific references to make sure additional categories were not represented. Most did not require any changes 
+
+Four papers referenced Graham papers, so went back to tick these
+Three papers referenced Mumby et al. 06, 11, so went back to select
+
+Maynard and McLeod 2012; Maynard et al. 2015; Maynard et al. 2012 - all 3 referenced in single publication, so just selecting Maynard et al. 2015 is good enough (already done)
+
+1 paper cited just Maynard and McLeod 2012 - initially classified as Other, but need to go back and select Maynard et al. 2015
+
+Other and Multiple need to be grouped into a single category - Other
+
+There are only a few publications which are used on their own to determine the entire suite of indicators, such manuals like Obura and Grimsditch 2009 or Maynard and McLeod 2012, or papers such as McClanahan et al. 2012 and Maynard et al. 2015, other studies by the likes of Graham, Mumby, Fabricius, Hughes and Belwood are commonly referenced as proof of the effect of these individual factors/indicators e.g. recruitment or herbivore fish biomass. 
+
+Can be multiple sources/references per publication due to multiple variables
+
+Since there is a lot of overlap between indicators and factors in resilience pot assessments, references for the factors are also relevant and used here, particularly when refs for indicators are not provided and there is a link between factors and indicators, so this is essentially a mix of factors and variable sources
+
+
+```{r sources_indicators_groups, eval=TRUE}
+
+# - bar plot showing frequency of responses
+data$Sources.for.variable.indicator.selection..groups.%>% unique()
+#many values - 15 unique combinations
+
+#strange response:
+#PC_2016_IlesEparses - Other; Not applicable (this study had indicators, so should only be other)
+
+
+#Steps to get the frequency occurence of responses:
+
+indicator_sources_groups<-data %>% 
+              mutate(ind_source2=`Sources.for.variable.indicator.selection..groups.` )%>% 
+              select(Study.ID.1,ind_source2) 
+
+
+#split by ; into individual columns
+str_split_fixed(indicator_sources_groups$ind_source2, ";", 4) #one entry in col 4
+
+indicator_sources_split2<-str_split_fixed(indicator_sources_groups$ind_source2, ";", 4)  %>% as.data.frame()
+indicator_sources_split2$study<-indicator_sources_groups$Study.ID.1
+
+
+#Change from wide to single, long column
+data_long <- gather(indicator_sources_split2,study, values, V1:V4, factor_key=TRUE)
+
+#cleaning steps: 1. remove leading whitespace
+#remove - at start of some strings
+data_long$values<-sub("^\\s+", "", data_long$values) #removesleading whitespace
+data_long$values<- sub("\\s+$", "", data_long$values) #removes trailing whitespace
+
+
+
+#all the blanks are not true blanks, they are artifacts of the method (make the dataset wide)
+
+
+#will just need to create a new matrix with the method and frequency
+data_plot<-data_long %>%  #
+  mutate_all(na_if,"") %>%  #make blanks into NAs
+  na.omit() %>% #remove the NAs
+  mutate(values=values  %>% factor() %>%
+  fct_recode(`Other` = "Multiple")) %>%   #merge Multiple to Other as a single category
+  count(values)  #frequency count of responses
+  #frequency count of responses
+
+#calculate percentage occurences based on assessments which are not applicable 
+#all not applicable studies only have this singular respose
+h<-data_plot$n[data_plot$values=="Not applicable"]
+data_plot$percent<-(data_plot$n/(nrow(data)-h)*100) %>% round(1)
+
+
+
+data_plot$values %>% unique()
+
+factor_order<-c("Obura and Grimsditch 2009","McClanahan et al. 2012","Maynard et al. 2010","Maynard et al. 2015", "Multiple", "Not applicable","Other", "Unknown/Unclear")
+
+data_plot %<>%  mutate(values=values %>% factor(levels = factor_order)) %>% 
+                  filter(values!="Not applicable") #don't need to plot the not applicable responses
+
+
+
+#plot
+#produce a simple frequency histogram of occurences of totals - percentage of quantitative assessments
+ggplot(data_plot, aes(x= factor(values), y=percent)) +
+  geom_bar(stat = "identity", color = "black", fill = "grey") +
+  theme_bw()+
+  xlab('')+
+  ylab('Percentage of quantitative assessments')+
+  theme(legend.position = 'none')+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=12.5),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=13))
+
+#to improve:
+#should we remove the not applicable, and should we change the % calculation to exclude these assessments
+#order of responses
+
+```
+
+
+
+##Source of methods for calculating index
+```{r sources_methods, eval=TRUE}
+
+# - bar plot showing frequency of responses
+data$Source.of.methods.for.calculating.index%>% unique() %>%  sort()
+#14 unique combinations
+
+
+#Create a seperate dataset
+methods_sources<-data %>% 
+              mutate(methods_source=`Source.of.methods.for.calculating.index`) %>% 
+                select(Study.ID.1,methods_source) 
+
+
+#split by ; into individual columns
+str_split_fixed(methods_sources$methods_source, ";", 4) #one entry in col 4
+
+method_sources_split2<-str_split_fixed(methods_sources$methods_source, ";", 4)  %>% as.data.frame()
+method_sources_split2$study<-methods_sources$Study.ID.1
+
+
+#Change from wide to single, long column
+data_long <- gather(method_sources_split2,study, values, V1:V4, factor_key=TRUE)
+
+#cleaning steps: 1. remove leading whitespace
+#remove - at start of some strings
+data_long$values<-sub("^\\s+", "", data_long$values) #removesleading whitespace
+data_long$values<- sub("\\s+$", "", data_long$values) #removes trailing whitespace
+
+
+data_long$values %>% unique() %>%  sort()
+
+#all the blanks are not true blanks, they are artifacts of the method (make the dataset wide)
+
+
+#will just need to create a new matrix with the method and frequency
+data_plot<-data_long %>%  #
+  mutate_all(na_if,"") %>%  #make blanks into NAs
+  na.omit() %>% #remove the NAs
+  mutate(values=values  %>% factor() %>%
+                                 fct_recode(`Unknown/Unclear` = "",
+                                            `Maynard and McLeod 2012`= "Maynard and McLeod - HOW-TO-GUIDE FOR CONDUCTING RESILIENCE ASSESSMENTS",
+                      `Obura and Grimsditch 2009`= "Obura & Grimsditch 2009",
+                      `Obura and Grimsditch 2009`= "Obura and Grimsditch, 2009",
+                      `Obura and Grimsditch 2009`= "Obura and Grismditch 2009",
+                      `Unknown/Not specified`="Unknown",
+                      `Unknown/Not specified`="Not specified",
+                      `Unknown/Not specified`="",
+                      `Other`="Atlantic and Gulf Rapid Reef Assessment (AGRRA) protocol",               
+                       `Other`=      "Belokurov et al., 2016",                                                 
+                       `Other`=      "Chou et al., 1995"      ,                                                
+                       `Other`=      "Chung et al. 2019 (b)"  ,                                               
+                       `Cinner et al. 2012`=  "Cinner et al., 2012"    ,                                                
+                      `Other`=       "Crain et al. 2008"      ,                                                
+                       `Other`=     "Developed by this paper (novel framework)" ,                             
+                       `Other`=     "Fukaya et al. 2010",                                                     
+                        `Other`=    "Gibbs and West 201",                                                     
+                         `Other`=   "Giyanto et al. 2017",                                                    
+                        `Other`=    "Halpern et al., 2008",                                                   
+                        `Other`=    "Ladd and Collado-Vides (2013)" ,                                         
+                          `Maynard et al. 2012,15,17` =  "Maynard et al. 2012",                                                                              `Maynard et al. 2012,15,17` =  "Maynard et al. 2015",                                                                            `Maynard et al. 2012,15,17` =   "Maynard et al. 2017",                                                                           `Maynard et al. 2012,15,17` =  "Maynard et al., 2015",                                                                         `Other`=    "McClanahan, 2004"    ,                                                   
+                            `N/A`="Not applicable",                                                         
+                              `Other`        =   "Maina et al. 2011",                            
+                         `Other`=  "Orwin and Wardle (2004)" ,                                               
+                                                                                    
+                       `Other`= "Salm et al. 2011",                                                       
+                       `Other`=     "Walker et al. 2002",                                                     
+                       `Other`=    "Zadeh 1965" )) %>% 
+   count(values)  #frequency count of responses
+  #frequency c
+
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(data_plot, aes(x= factor(values), y=n)) +
+  geom_bar(stat = "identity", color = "black", fill = "grey") +
+  theme_bw()+
+  xlab('')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))+
+  theme( panel.border = element_blank(),
+        axis.text = element_text(size=12.5),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size=13))
+
+
+
+
+```
+
+
+```{r approach, eval=TRUE}
+
+#Match data with included_assessments_edited
+
+included_assessments_edited<-read.csv("included_assessments_edited.csv")
+
+missing<-final_study_list[!final_study_list %in% included_assessments_edited$Study.ID.1] #what assessments are in the data but missing from the list of included_assessments_edited
+
+# "NTL_2019_Vietnam"    "TP_2018_Indonesia"   "FJ_2022_SWIO"        "TA_2008_Philippines" "2015_Malaysia"      
+# "JH_2013_Malaysia"    "BS_2018_Samoa"  
+
+
+included_assessments_edited$Study.ID.1[!included_assessments_edited$Study.ID.1 %in% final_study_list] #assessments in the list but not in data
+ # [1] "MG_2021_Palau"         "DG_2021_GuanicaBay"    "KH_2017_GBR"           "TS_2016_Eilat"         "MW_2021_Chagos"       
+ # [6] "AC_2019_Hawaii"        "MS_2016_Dijbouti"      "BS_2018_AmericanSamoa" "JM_2016_PNG" 
+
+
+
+#filter the data to only include final_study_list
+#adds the missing studies from data 
+included_assessments_edited %<>% 
+  select(Lead.author.contact.details,Study.ID.1,Title.1,Sources.for.variable.indicator.selection..groups., Source.of.methods.for.calculating.index,Grouping) %>% 
+  filter(Study.ID.1 %in% final_study_list) %>% 
+  rbind(data %>%
+         select(Lead.author.contact.details,Study.ID.1,Title.1,Sources.for.variable.indicator.selection..groups., Source.of.methods.for.calculating.index) %>% 
+         filter(Study.ID.1 %in% missing) %>% 
+         mutate(Grouping=NA))
+ 
+#for the 7 assessments added, need to fill the NA Grouping
+
+included_assessments_edited$Grouping %>%  unique()
+# [1] "Salm"                                      "Obura & Grimsditch"                        "Cowburn"                                  
+#  [4] "Unsure"                                    "Maynard"                                   "Other"                                    
+#  [7] "Maynard 2010"                              "Mumby"                                     "Maynard & McLeod"                         
+# [10] "Maynard 2010; Salm"                        "Obura and Grismditch; Maynard et al. 2012" 
+
+
+included_assessments_edited %<>% 
+          mutate(Grouping=Grouping %>% 
+                          replace(Study.ID.1 == "NTL_2019_Vietnam","Unsure") %>%  
+                          replace(Study.ID.1 == "TP_2018_Indonesia","Maynard") %>% 
+                          replace(Study.ID.1 == "FJ_2022_SWIO","Other") %>% 
+                          replace(Study.ID.1 == "TA_2008_Philippines","Maynard 2010") %>%  
+                          replace(Study.ID.1 == "2015_Malaysia","Obura & Grimsditch") %>%  
+                          replace(Study.ID.1 == "JH_2013_Malaysia","Obura & Grimsditch") %>% 
+                          replace(Study.ID.1 == "BS_2018_Samoa","Maynard"))
+
+#School or approaches should be based on the following 4 criteria:
+#1. Indicator selection
+#2. Model, expert, qualitative 
+#3. Indicator normalisation
+#4. Aggregation methods
+#5. Management prioritisation
+
+#Salm 2010,11 - early Salm - 
+#Maynard et al. 2012 -
+#Maynard and McLeod 2012 - uses reduced indicator set of McClanahan et al. 2012 and starts the normalisation and aggregation of Maynard approaches e.g. All other values for that variable - all of the sites with less than the max value - are normalized to the score of 1 by dividing by the maximum value
+
+
+#After review of original classifications, make some changes
+included_assessments_edited %<>% 
+          mutate(Grouping=Grouping %>% 
+                          replace(Study.ID.1 == "PIFSC_2014_Hawaii","McClanahan et al. 2012") %>%  
+                          replace(Study.ID.1 == "AB_2010_Bonaire","Obura & Grimsditch") %>% 
+                          replace(Study.ID.1 == "BR_2019_Ecuador","Other") %>% 
+                          replace(Study.ID.1 == "GR_2012_SaudiArabia","Other") %>%  
+                          replace(Study.ID.1 == "MS_2011_Metundo","Obura & Grimsditch") %>%  
+                          replace(Study.ID.1 == "RS_2010_Mozambique","Maynard 2010") %>% 
+                          replace(Study.ID.1 == "RS_2011_Palau","Maynard 2010")%>%
+                          replace(Study.ID.1 == "RS_2011_Wakatobi","Maynard 2010")%>%
+                          replace(Study.ID.1 == "TM_2012_ KarimunjawaIslands","McClanahan et al. 2012") %>% 
+                          replace(Grouping == "Obura and Grismditch; Maynard et al. 2012","Obura & Grimsditch") %>% 
+                          replace(Grouping == "Maynard & McLeod","Maynard")
+                 )
+
+
+#plot
+#produce a simple frequency histogram of occurences of totals - number of assessments with each total
+ggplot(included_assessments_edited, aes(x= factor(Grouping))) +
+  geom_bar(aes(fill=Grouping))+
+  theme_bw()+
+  coord_flip()+
+  xlab('Approach')+
+  ylab('Number of assessments')+
+  theme(legend.position = 'none')+
+  theme(panel.border = element_blank(),
+        text = element_text(size=15),
+        axis.text = element_text(size = 15),
+        axis.line = element_line(colour = "black"))
+
+
+
+```
+
