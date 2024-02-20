@@ -3,8 +3,8 @@ message: "If you use this data or code, please cite it as below."
 authors:
 - family-names: Gudka
   given-names: Mishal
-  orcid: "https://orcid.org/0000-0001-6733-9381"
+  orcid: https://orcid.org/0000-0001-6733-9381
 title: "Data from: Strengthening resilience potential assessments for coral reef management"
-version: "v1.0.1"
+version: v1.0.1
 doi: 10.5281/zenodo.10622391
 date-released: 2024-02-06                         
