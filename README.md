@@ -7,3 +7,6 @@ The files are split into 2 folders - Rapid evaluation (file=script_explore_rapid
 Detailed evaluation (file = script_explore_detail_eval_data.Rmd.; data = review_detailed_eval_data.csv) assesses the selected assessments against the remaining criteria.  
 
 The files provided should enable users to reproduce all figures (including supplementary results) and analysis except the map of Meow eco-regions of the world (Figure 2). 
+
+Cite as:
+Gudka M (2024) Data from: Strengthening resilience potential assessments for coral reef management [10.5281/zenodo.10622390]
